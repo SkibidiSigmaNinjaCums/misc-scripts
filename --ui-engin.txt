@@ -13,6 +13,7 @@ local ui_options = {
 
 do
 	local imgui = game:GetService("CoreGui"):FindFirstChild("imgui")
+
 	if imgui then imgui:Destroy() end
 end
 
@@ -1293,7 +1294,7 @@ function library:AddWindow(title, options)
 
 							local Held = false
 							UIS.InputBegan:Connect(function(inputObject)
-								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
+								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 or inputObject.UserInputType == Enum.UserInputType.Touch then
 									Held = true
 
 									spawn(function() -- Loop check
@@ -1333,7 +1334,7 @@ function library:AddWindow(title, options)
 								end
 							end)
 							UIS.InputEnded:Connect(function(inputObject)
-								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
+								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 or inputObject.UserInputType == Enum.UserInputType.Touch then
 									Held = false
 								end
 							end)
@@ -1574,7 +1575,7 @@ function library:AddWindow(title, options)
 
 							local Held = false
 							UIS.InputBegan:Connect(function(inputObject)
-								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
+								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 or inputObject.UserInputType == Enum.UserInputType.Touch then
 									Held = true
 
 									spawn(function() -- Loop check
@@ -1608,7 +1609,7 @@ function library:AddWindow(title, options)
 								end
 							end)
 							UIS.InputEnded:Connect(function(inputObject)
-								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
+								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 or inputObject.UserInputType == Enum.UserInputType.Touch then
 									Held = false
 								end
 							end)
@@ -2033,7 +2034,7 @@ function SendNotification(text)
         {Image = "http://www.roblox.com/asset/?id=6023426923", ImageColor = Color3.fromRGB(69,0,0)}
     )
 end
-
+--[[
 local hitsounds = {
     {name = "hentai.wav", url = "https://github.com/tickcount/hitsounds/raw/master/hentai2.mp3"},    
     {name = "amongus.wav", url = "https://github.com/tickcount/hitsounds/raw/master/amongus_kill.wav"},
@@ -2057,11 +2058,12 @@ for _, sound in pairs(hitsounds) do
         writefile(path, game:HttpGet(sound.url))
     end
 end
+]]--
 
 getgenv().Settings = {
     FearLas = {
         Enabled = false,
-        DOT = true,
+        DOT = false,
         AIRSHOT = false,
         NOTIF = true,
         AUTOPRED = false,
@@ -2097,7 +2099,7 @@ getgenv().Settings = {
 
 getgenv().DistancesMid = 50
 getgenv().DistancesClose = 10
-
+getgenv().AimSpeed = 1
 getgenv().CAMPREDICTION = 7
 getgenv().CAMJUMPPREDICTION = 10
 getgenv().HorizontalSmoothness = 1
@@ -2112,6 +2114,25 @@ getgenv().JUMPPREDICTION = 0.09
 getgenv().SelectedPart = "HumanoidRootPart" --// LowerTorso, UpperTorso, Head
 getgenv().Prediction = "Normal"
 getgenv().AutoPredType = "Normal"
+getgenv().Resolver = false
+
+function calculateVelocity(initialPos, finalPos, timeInterval)
+    local displacement = finalPos - initialPos
+    local velocity = displacement / timeInterval
+    return velocity
+    end
+    game:GetService('RunService').RenderStepped:connect(function(deltaTime)
+    if getgenv().Resolver == true and enabled then 
+        local character = Plr.Character[getgenv().SelectedPart]
+        local lastPosition = character.Position
+            task.wait()
+        local currentPosition = character.Position
+        local velocity = calculateVelocity(lastPosition, currentPosition, deltaTime)
+        character.AssemblyLinearVelocity = velocity
+        character.Velocity = velocity
+            lastPosition = currentPosition
+        end
+    end)
 
 --// Change Prediction,  AutoPrediction Must Be Off
     local lplr = game.Players.LocalPlayer
@@ -2153,8 +2174,6 @@ getgenv().AutoPredType = "Normal"
         end
         return(e)
     end
- 
- 
     local data = game.Players:GetPlayers()
     function noob(player)
         local character
@@ -2190,7 +2209,7 @@ getgenv().AutoPredType = "Normal"
         else
         placemarker.Size = Vector3.new(0, 0, 0)
         end
-        placemarker.Transparency = 0.75
+        placemarker.Transparency = 0.999999999
         if getgenv().Settings.FearLas.DOT then
         makemarker(placemarker, placemarker, Color3.fromRGB(69,0,0), 1, 0)
         end
@@ -2198,7 +2217,7 @@ getgenv().AutoPredType = "Normal"
  
     local Tool = Instance.new("Tool")
 Tool.RequiresHandle = false
-Tool.Name = "Lock Tool"
+Tool.Name = "Aimlock Tool"
 Tool.Parent = game.Players.LocalPlayer.Backpack
 
 local player = game.Players.LocalPlayer
@@ -2433,6 +2452,10 @@ end)
         return closestPlayer
     end
  
+local Stats = game:GetService("Stats")
+
+local Piiing = Stats:WaitForChild("Network"):WaitForChild("ServerStatsItem"):WaitForChild("Data Ping")
+ 
     local pingvalue = nil;
     local split = nil;
     local ping = nil;
@@ -2441,80 +2464,98 @@ local LocalHL = Instance.new("Highlight")
     game:GetService"RunService".Stepped:connect(function()
         if enabled and getgenv(). Settings.FearLas.Enabled and Plr.Character ~= nil and Plr.Character:FindFirstChild("HumanoidRootPart") or enabled and getgenv(). Settings.FearLas.Camera.Enabled and Plr.Character ~= nil and Plr.Character:FindFirstChild("HumanoidRootPart") then
 if getgenv().Prediction == "Normal" then
-            placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position+Vector3.new(Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.X*getgenv().PREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Y*getgenv().JUMPPREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Z*getgenv().PREDICTION))         
+            placemarker.CFrame = CFrame.new(Plr.Character[getgenv().SelectedPart].Position+Vector3.new(Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.X*getgenv().PREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Y*getgenv().JUMPPREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Z*getgenv().PREDICTION))         
 elseif getgenv().Prediction == "Yun" then
-            placemarker.CFrame = CFrame.new(Plr.Character.HumanoidRootPart.Position+Vector3.new(Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.X*getgenv().PREDICTION/10,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Y*getgenv().JUMPPREDICTION/10,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Z*getgenv().PREDICTION/10))
+            placemarker.CFrame = CFrame.new(Plr.Character[getgenv().SelectedPart].Position+Vector3.new(Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.X*getgenv().PREDICTION/10,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Y*getgenv().JUMPPREDICTION/10,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Z*getgenv().PREDICTION/10))
 end
+
 LocalHL.Parent = Plr.Character
-LocalHL.FillTransparency = 0.2
+LocalHL.FillTransparency = 0.99999
 LocalHL.FillColor = Color3.fromRGB(69,0,0)
 LocalHL.OutlineColor = Color3.fromRGB(255,255,255)
+
         else
             placemarker.CFrame = CFrame.new(0, 9999, 0)
+    
           LocalHL.Parent = nil
+        
         end
+pingvalue = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
+split = string.split(pingvalue,'(')
+ping = tonumber(split[1])
+
 if getgenv().Settings.FearLas.AdvancedAutoPred == true and enabled then
-local Piing = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()
-                Split = string.split(Piing,'(')
-                Pig = tonumber(Split[1])
-if Pig < 270 then
-getgenv().CAMPREDICTION = 4
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 200 then 
-getgenv().CAMPREDICTION = 4.4
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 190 then 
-getgenv().CAMPREDICTION = 4.8
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 180 then
-getgenv().CAMPREDICTION = 4.19
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 170 then 
-getgenv().CAMPREDICTION = 5.085
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 160 then 
-getgenv().CAMPREDICTION = 5.133
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 150 then
-getgenv().CAMPREDICTION = 5.1867
-getgenv().CAMJUMPPREDICTION = 10
-elseif 140 then
-getgenv().CAMPREDICTION = 5.13
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 130 then
-getgenv().CAMPREDICTION = 5.21
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 120 then
-getgenv().CAMPREDICTION = 5.377
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 110 then
-getgenv().CAMPREDICTION = 5.42
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 100 then
-getgenv().CAMPREDICTION = 5.922
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 90 then
-getgenv().CAMPREDICTION = 6.32
-getgenv().CAMJUMPPREDICTION = 10
-elseif 80 then
-getgenv().CAMPREDICTION = 6.66
-getgenv().CAMJUMPPREDICTION = 10
-elseif Pig < 70 then
-getgenv().CAMPREDICTION = 7.144
-getgenv().CAMJUMPPREDICTION = 10
-end
+    getgenv().CAMJUMPPREDICTION = tostring(ping/1500)
+    if ping > 300 then
+        getgenv().CAMPREDICTION = 0.434
+    elseif ping > 290 then
+        getgenv().CAMPREDICTION = 0.422
+    elseif ping > 280 then
+        getgenv().CAMPREDICTION = 0.44
+    elseif ping > 270 then
+        getgenv().CAMPREDICTION = 0.4385
+    elseif ping > 260 then
+        getgenv().CAMPREDICTION = 0.4158
+    elseif ping > 250 then
+        getgenv().CAMPREDICTION = 0.3148
+    elseif ping > 240 then
+        getgenv().CAMPREDICTION = 0.34
+    elseif ping > 230 then
+        getgenv().CAMPREDICTION = 0.33
+    elseif ping > 220 then
+        getgenv().CAMPREDICTION = 0.30
+    elseif ping > 210 then
+        getgenv().CAMPREDICTION = 0.295
+    elseif ping > 200 then
+        getgenv().CAMPREDICTION = 0.2915
+    elseif ping > 190 then
+        getgenv().CAMPREDICTION = 0.2911
+    elseif ping > 180 then
+        getgenv().CAMPREDICTION = 0.28291198328
+    elseif ping > 180 then
+        getgenv().CAMPREDICTION = 0.25291198328
+    elseif ping > 170 then
+        getgenv().CAMPREDICTION = 0.28
+    elseif ping > 160 then
+        getgenv().CAMPREDICTION = 0.2754
+    elseif ping  >150 then
+        getgenv().CAMPREDICTION = 0.271
+    elseif ping  >140 then
+        getgenv().CAMPREDICTION = 0.25
+       elseif ping > 130 then
+        getgenv().CAMPREDICTION = 0.12057
+    elseif ping > 120 then
+        getgenv().CAMPREDICTION = 0.1966
+    elseif ping > 110 then
+        getgenv().CAMPREDICTION = 0.18642271
+    elseif ping > 100 then
+        getgenv().CAMPREDICTION = 0.18533
+    elseif ping > 90 then
+        getgenv().CAMPREDICTION = 0.1749573
+    elseif ping > 80 then
+        getgenv().CAMPREDICTION = 0.1745
+    elseif ping > 70 then
+        getgenv().CAMPREDICTION = 0.1642
+    elseif ping > 50 then
+        getgenv().CAMPREDICTION = 0.14267
+    elseif ping > 40 then
+        getgenv().CAMPREDICTION = 0.142
+    elseif ping > 30 then
+        getgenv().CAMPREDICTION = 0.1312
+   elseif ping > 20 then
+        getgenv().CAMPREDICTION = 0.1312
+   elseif ping > 10 then
+        getgenv().CAMPREDICTION = 0.1287
+   end
 end
 if getgenv().Settings.FearLas.AUTOPRED == true and enabled then
-pingvalue = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
-             split = string.split(pingvalue,'(')
-             ping = tonumber(split[1])
 if getgenv().AutoPredType == "Normal" then
 if getgenv().Prediction == "Normal" then
 getgenv().JUMPPREDICTION = tostring(ping/1500)
 if ping <200 then
-        getgenv().PREDICTION = 0.198343243234332
+        getgenv().PREDICTION = 0.2198343243234332
     elseif ping < 170 then
-        getgenv().PREDICTION = 0.165713
+        getgenv().PREDICTION = 0.2165713
     elseif ping < 160 then
         getgenv().PREDICTION = 0.16242
     elseif ping < 150 then
@@ -2524,55 +2565,87 @@ if ping <200 then
     elseif ping < 130 then
         getgenv().PREDICTION = 0.152692
     elseif ping < 120 then
-        getgenv().PREDICTION = 0.15017
+        getgenv().PREDICTION = 0.153017
     elseif ping < 110 then
-        getgenv().PREDICTION = 0.1465
+        getgenv().PREDICTION = 0.15165
     elseif ping < 100 then
-  getgenv().PREDICTION = 0.143987
+  getgenv().PREDICTION = 0.1543987
  elseif ping < 80 then
-  getgenv().PREDICTION = 0.141340
+  getgenv().PREDICTION = 0.151340
  elseif ping < 70 then
-  getgenv().PREDICTION = 0.13633
+  getgenv().PREDICTION = 0.143633
  elseif ping < 65 then
-  getgenv().PREDICTION = 0.1274236
+  getgenv().PREDICTION = 0.1374236
  elseif ping < 50 then
   getgenv().PREDICTION = 0.13644
  elseif ping < 30 then
   getgenv().PREDICTION = 0.12452476
 end
-elseif getgenv().Prediction == "Yun" then
-getgenv().JUMPPREDICTION = tostring(ping/150)
-if ping <200 then
-
-        getgenv().PREDICTION = 1.98343243234332
-    elseif ping < 170 then
-        getgenv().PREDICTION = 1.65713
-    elseif ping < 160 then
-        getgenv().PREDICTION = 1.6242
-    elseif ping < 150 then
-        getgenv().PREDICTION = 1.58041
-    elseif ping < 140 then
-        getgenv().PREDICTION = 1.55313
-    elseif ping < 130 then
-        getgenv().PREDICTION = 1.52692
-    elseif ping < 120 then
-        getgenv().PREDICTION = 1.5017
-    elseif ping < 110 then
-        getgenv().PREDICTION = 1.465
-    elseif ping < 100 then
-  getgenv().PREDICTION = 1.43987
- elseif ping < 80 then
-  getgenv().PREDICTION = 1.41340
- elseif ping < 70 then
-  getgenv().PREDICTION = 1.3633
- elseif ping < 65 then
-  getgenv().PREDICTION = 1.274236
- elseif ping < 50 then
-  getgenv().PREDICTION = 1.3644
- elseif ping < 30 then
-  getgenv().PREDICTION = 1.2452476
- end
-
+end
+elseif getgenv().AutoPredType == "Beta AutoPred" then
+    if getgenv().Prediction == "Normal" then
+    getgenv().JUMPPREDICTION = tostring(ping/1500)
+    if ping > 300 then
+        getgenv().PREDICTION = 0.434
+    elseif ping > 290 then
+        getgenv().PREDICTION = 0.422
+    elseif ping > 280 then
+        getgenv().PREDICTION = 0.44
+    elseif ping > 270 then
+        getgenv().PREDICTION = 0.4385
+    elseif ping > 260 then
+        getgenv().PREDICTION = 0.4158
+    elseif ping > 250 then
+        getgenv().PREDICTION = 0.3148
+    elseif ping > 240 then
+        getgenv().PREDICTION = 0.34
+    elseif ping > 230 then
+        getgenv().PREDICTION = 0.33
+    elseif ping > 220 then
+        getgenv().PREDICTION = 0.30
+    elseif ping > 210 then
+        getgenv().PREDICTION = 0.295
+    elseif ping > 200 then
+        getgenv().PREDICTION = 0.2915
+    elseif ping > 190 then
+        getgenv().PREDICTION = 0.2911
+    elseif ping > 180 then
+        getgenv().PREDICTION = 0.19291198328
+    elseif ping > 180 then
+        getgenv().PREDICTION = 0.19291198328
+    elseif ping > 170 then
+        getgenv().PREDICTION = 0.18
+    elseif ping > 160 then
+        getgenv().PREDICTION = 0.1754
+    elseif ping  >150 then
+        getgenv().PREDICTION = 0.171
+    elseif ping  >140 then
+        getgenv().PREDICTION = 0.17
+       elseif ping > 130 then
+        getgenv().PREDICTION = 0.1657
+    elseif ping > 120 then
+        getgenv().PREDICTION = 0.1866
+    elseif ping > 110 then
+        getgenv().PREDICTION = 0.17642271
+    elseif ping > 100 then
+        getgenv().PREDICTION = 0.1733
+    elseif ping > 90 then
+        getgenv().PREDICTION = 0.1649573
+    elseif ping > 80 then
+        getgenv().PREDICTION = 0.1545
+    elseif ping > 70 then
+        getgenv().PREDICTION = 0.142
+    elseif ping > 50 then
+        getgenv().PREDICTION = 0.1267
+    elseif ping > 40 then
+        getgenv().PREDICTION = 0.12
+    elseif ping > 30 then
+        getgenv().PREDICTION = 0.112
+   elseif ping > 20 then
+        getgenv().PREDICTION = 0.102
+   elseif ping > 10 then
+        getgenv().PREDICTION = 0.087
+   end
 end
 elseif getgenv().AutoPredType == "Old Azure" then
 if getgenv().Prediction == "Normal" then
@@ -2634,68 +2707,7 @@ if getgenv().Prediction == "Normal" then
                 elseif ping < 10 then
                     getgenv().PREDICTION = 0.09
                 end
-elseif getgenv().Prediction == "Yun" then
-getgenv().JUMPPREDICTION = tostring(ping/150)
-   if ping < 360 then
-
-  getgenv().PREDICTION = 1.6537
-
-  elseif ping < 270 then
-     getgenv().PREDICTION = 1.95566
-     elseif ping < 260 then
-         getgenv().PREDICTION = 1.75566
-      elseif ping < 250 then
-         getgenv().PREDICTION = 1.651
-              elseif ping < 240 then
-           getgenv().PREDICTION = 1.6780
-                elseif ping < 230 then
-                    getgenv().PREDICTION = 1.5692
-                elseif ping < 220 then
-                    getgenv().PREDICTION = 1.65566
-                elseif ping < 210 then
-                    getgenv().PREDICTION = 1.6780
-                elseif ping < 200 then
-                    getgenv().PREDICTION = 1.65566
-                elseif ping < 190 then
-                    getgenv().PREDICTION = 1.66547
-                elseif ping < 180 then
-                    getgenv().PREDICTION = 1.9284
-                elseif ping < 170 then
-                    getgenv().PREDICTION = 1.923111 
-                elseif ping < 160 then
-                    getgenv().PREDICTION = 1.6
-                elseif ping < 150 then
-                    getgenv().PREDICTION = 1.5
-                elseif ping < 140 then
-                    getgenv().PREDICTION = 13.4223333
-                elseif ping < 130 then
-                    getgenv().PREDICTION = 1.56692
-                elseif ping < 120 then
-                    getgenv().PREDICTION = 1.43765
-                elseif ping < 110 then
-                    getgenv().PREDICTION = 1.455
-                elseif ping < 100 then
-                    getgenv().PREDICTION = 1.430340
-                elseif ping < 90 then
-                    getgenv().PREDICTION = 1.436
-                elseif ping < 80 then
-                    getgenv().PREDICTION = 1.4347
-                elseif ping < 70 then
-                    getgenv().PREDICTION = 1.419
-                elseif ping < 60 then
-                    getgenv().PREDICTION = 1.2731
-                elseif ping < 50 then
-                    getgenv().PREDICTION = 1.27668
-                elseif ping < 40 then
-                    getgenv().PREDICTION = 1.25
-                elseif ping < 30 then
-                    getgenv().PREDICTION =  1.1
-                elseif ping < 20 then
-                    getgenv().PREDICTION = 1.2588
-                elseif ping < 10 then
-                    getgenv().PREDICTION = 0.9
-                end
-        end
+end
 elseif getgenv().AutoPredType == "Fake Celex" then
     if getgenv().Prediction == "Normal" then
         getgenv().JUMPPREDICTION = tostring(ping/1500)
@@ -2738,49 +2750,6 @@ elseif getgenv().AutoPredType == "Fake Celex" then
                 elseif ping > 10 then
                     getgenv().PREDICTION = 0.09
                 end
-    elseif getgenv().Prediction == "Yun" then
-         getgenv().JUMPPREDICTION = tostring(ping/150)
-
-                if ping > 190 then
-
-                    getgenv().PREDICTION = 2.06547
-                elseif ping > 180 then
-                    getgenv().PREDICTION = 1.9284
-                elseif ping > 170 then
-                    getgenv().PREDICTION = 1.923111
-                elseif ping > 160 then
-                    getgenv().PREDICTION = 1.823111
-                elseif ping > 150 then
-                    getgenv().PREDICTION = 1.71
-                elseif ping > 140 then
-                    getgenv().PREDICTION = 1.65773
-                elseif ping > 130 then
-                    getgenv().PREDICTION = 1.4333322
-                elseif ping > 120 then
-                    getgenv().PREDICTION = 1.43765
-                elseif ping > 110 then
-                    getgenv().PREDICTION = 1.455
-                elseif ping > 100 then
-                    getgenv().PREDICTION = 1.43987
-                elseif ping > 90 then
-                    getgenv().PREDICTION = 1.4215
-                elseif ping > 80 then
-                    getgenv().PREDICTION = 1.41340
-                elseif ping > 70 then
-                    getgenv().PREDICTION = 1.3633
-                elseif ping > 60 then
-                    getgenv().PREDICTION = 1.2731
-                elseif ping > 50 then
-                    getgenv().PREDICTION = 01.27668
-                elseif ping > 40 then
-                    getgenv().PREDICTION = 1.25
-                elseif ping > 30 then
-                    getgenv().PREDICTION = 1.261
-                elseif ping > 20 then
-                    getgenv().PREDICTION = 1.2588
-                elseif ping > 10 then
-                    getgenv().PREDICTION = 0.9
-                end
     end
 
 end
@@ -2798,7 +2767,8 @@ print("wsg")
 end
 end
     end)
- 
+
+
 game:GetService"RunService".Stepped:connect(function()
     if enabled and getgenv().Settings.FearLas.Camera.Enabled then
         if Plr ~= nil then
@@ -2807,7 +2777,7 @@ game:GetService"RunService".Stepped:connect(function()
                 math.random(-getgenv().ShakeY, getgenv().ShakeY),
                 math.random(-getgenv().ShakeZ, getgenv().ShakeZ)
             ) * 0.1
-local HorizontalLookPosition = CFrame.new(CC.CFrame.p, Plr.Character[getgenv().SelectedPart].Position + (Vector3.new(Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.X/getgenv().CAMPREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Y/getgenv().CAMJUMPPREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Z/getgenv().CAMPREDICTION))+shakeOffset)
+local HorizontalLookPosition = CFrame.new(CC.CFrame.p, Plr.Character[getgenv().SelectedPart].CFrame.Position+(Vector3.new(Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.X*getgenv().CAMPREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Y*getgenv().CAMJUMPPREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Z*getgenv().CAMPREDICTION))+shakeOffset)
       CC.CFrame = CC.CFrame:Lerp(HorizontalLookPosition, getgenv().HorizontalSmoothness)
     end
 end
@@ -2820,22 +2790,6 @@ end)
         local args = {...}
         local vap = {"UpdateMousePos", "GetMousePos", "MousePos", "MOUSE", "MousePosUpdate"}
         if enabled and getnamecallmethod() == "FireServer" and table.find(vap, args[2]) and getgenv().Settings.FearLas.Enabled and Plr.Character ~= nil and getgenv().Settings.FearLas.LOCKTYPE == "Namecall" then
-            -- args[3] = Plr.Character.HumanoidRootPart.Position+(Plr.Character.HumanoidRootPart.Velocity*accomidationfactor)
-            --[[
-            if getgenv().Settings.FearLas.AIRSHOT == true then
-                if game.Workspace.Players[Plr.Name].Humanoid:GetState() == Enum.HumanoidStateType.Freefall then -- Plr.Character:WaitForChild("Humanoid"):GetState() == Enum.HumanoidStateType.Freefall
- 
-                    --// Airshot
-                    args[3] = Plr.Character.LeftFoot.Position+(Plr.Character.LeftFoot.Velocity*PredictionValue)
- 
-                else
-                    args[3] = Plr.Character.HumanoidRootPart.Position+(Plr.Character.HumanoidRootPart.Velocity*getgenv().PREDICTION)
- 
-                end
-            else
-                    args[3] = Plr.Character.HumanoidRootPart.Position+(Plr.Character.HumanoidRootPart.Velocity*getgenv().PREDICTION)
-            end
-            ]]
             if getgenv().Prediction == "Normal" then
             args[3] = Plr.Character[getgenv().SelectedPart].Position+Vector3.new(Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.X*getgenv().PREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Y*getgenv().JUMPPREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Z*getgenv().PREDICTION)
             elseif getgenv().Prediction == "Yun" then
@@ -2851,80 +2805,12 @@ end)
         return old(...)
     end)
 
---[[
-    game:GetService("RunService").RenderStepped:Connect(function()
-        if getgenv().Settings.FearLas.RESOVLER == true and Plr.Character ~= nil and enabled and getgenv().Settings.FearLas.Enabled then
-        if getgenv().Settings.FearLas.AIRSHOT == true and enabled and Plr.Character ~= nil then
- 
-            if game.Workspace.Players[Plr.Name].Humanoid:GetState() == Enum.HumanoidStateType.Freefall then -- Plr.Character:WaitForChild("Humanoid"):GetState() == Enum.HumanoidStateType.Freefall
- 
-                --// Airshot
- 
-                --// Anchor Check
- 
-                if Plr.Character ~= nil and Plr.Character.HumanoidRootPart.Anchored == true then
-                    AnchorCount = AnchorCount + 1
-                    if AnchorCount >= MaxAnchor then
-                        Prediction = false
-                        wait(2)
-                        AnchorCount = 0;
-                    end
-                else
-                    Prediction = true
-                    AnchorCount = 0;
-                end
- 
-                SelectedPart = "LeftFoot"
- 
-            else
-                --// Anchor Check
- 
-                if Plr.Character ~= nil and Plr.Character.HumanoidRootPart.Anchored == true then
-                    AnchorCount = AnchorCount + 1
-                    if AnchorCount >= MaxAnchor then
-                        Prediction = false
-                        wait(2)
-                        AnchorCount = 0;
-                    end
-                else
-                    Prediction = true
-                    AnchorCount = 0;
-                end
- 
-                SelectedPart = "HumanoidRootPart"
- 
-            end
-            else
- 
-                --// Anchor Check
- 
-                if Plr.Character ~= nil and Plr.Character.HumanoidRootPart.Anchored == true then
-                    AnchorCount = AnchorCount + 1
-                    if AnchorCount >= MaxAnchor then
-                        Prediction = false
-                        wait(2)
-                        AnchorCount = 0;
-                    end
-                else
-                    Prediction = true
-                    AnchorCount = 0;
-                end
- 
-                SelectedPart = "HumanoidRootPart"
-            end
- 
-        else
-                SelectedPart = "HumanoidRootPart"
-        end
-    end)
-]]
-
 local Hooks = {}
 local Client = game.Players.LocalPlayer
 
 Hooks[1] = hookmetamethod(Client:GetMouse(), "__index", newcclosure(function(self, index)
     if index == "Hit" and getgenv().Settings.FearLas.LOCKTYPE == "Index" and enabled and Plr.Character ~= nil and getgenv().Settings.FearLas.Enabled then
-            local position = CFrame.new(Plr.Character[SelectedPart].Position+Vector3.new(Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.X*getgenv().PREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Y*getgenv().JUMPPREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Z*getgenv().PREDICTION))
+            local position = CFrame.new(Plr.Character[getgenv().SelectedPart].Position+Vector3.new(Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.X*getgenv().PREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Y*getgenv().JUMPPREDICTION,Plr.Character.HumanoidRootPart.AssemblyLinearVelocity.Z*getgenv().PREDICTION))
             return position
         
     end
@@ -3000,7 +2886,7 @@ if getgenv().CFrameDesync.AnglesEnabled or getgenv().CFrameDesync.Enabled then
             elseif getgenv().CFrameDesync.Type == "Target Strafe" then
             if enabled and Plr ~= nil then
                 local currentTime = tick() 
-                cframe = CFrame.new(Plr.Character.HumanoidRootPart.Position) * CFrame.Angles(0, 2 * math.pi * currentTime * getgenv().CFrameDesync.TargetStrafe.Speed % (2 * math.pi), 0) * CFrame.new(0, getgenv().CFrameDesync.TargetStrafe.Height, getgenv().CFrameDesync.TargetStrafe.Distance)
+                cframe = CFrame.new(Plr.Character[getgenv().SelectedPart].Position) * CFrame.Angles(0, 2 * math.pi * currentTime * getgenv().CFrameDesync.TargetStrafe.Speed % (2 * math.pi), 0) * CFrame.new(0, getgenv().CFrameDesync.TargetStrafe.Height, getgenv().CFrameDesync.TargetStrafe.Distance)
             elseif getgenv.CFrameDesync.Type == "Local Strafe" then
                 local currentTime = tick() 
                 cframe = CFrame.new(lplr.Character.HumanoidRootPart.Position) * CFrame.Angles(0, 2 * math.pi * currentTime * getgenv.CFrameDesync.TargetStrafe.Speed % (2 * math.pi), 0) * CFrame.new(0, getgenv.CFrameDesync.TargetStrafe.Height, getgenv().CFrameDesync.TargetStrafe.Distance)
@@ -3129,6 +3015,12 @@ do -- Example UI
 	{
 	["clear"] = false, -- Default: true (options are optional)
 	})
+	Tab:AddTextBox("Aim Speed Value | 1 = Normal", function(text)
+		getgenv().AimSpeed = text
+		end, 
+	{
+	["clear"] = false, -- Default: true (options are optional)
+	})
 local ShakeFolder = Tab:AddFolder("Shake Configuration")
 	ShakeFolder:AddTextBox("X Value", function(text)
 		getgenv().ShakeX = text
@@ -3157,28 +3049,29 @@ thingsetup:Set(false)
 	local Dropdown = Tab:AddDropdown("Aim Bone", function(object)
 		getgenv().SelectedPart = object
 		end)
-
 Dropdown:Add("HumanoidRootPart")
 Dropdown:Add("UpperTorso")
 Dropdown:Add("LowerTorso")
 Dropdown:Add("Head")
-
 --// Target Lock
-
 	Teb:AddLabel("Configuration")
-
 	local bled = Teb:AddSwitch("Enabled", function(bool)
 	getgenv().Settings.FearLas.Enabled = bool
 	end)
 bled:Set(false)
-
 		local TypeThing = Teb:AddDropdown("Aim Type", function(object)
 			getgenv().Settings.FearLas.LOCKTYPE = object
-
 		end)
-
 TypeThing:Add("Namecall")
 TypeThing:Add("Index")
+
+
+
+
+
+
+
+
 
 		local PredTypeThing = Teb:AddDropdown("Prediction Type", function(object)
 			getgenv().Prediction = object
@@ -3189,6 +3082,7 @@ local AutoPredTypeThing = Teb:AddDropdown("AutoPred Type", function(object)
 getgenv().AutoPredType = object
 end)
 AutoPredTypeThing:Add("Normal")
+AutoPredTypeThing:Add("Beta AutoPred")
 AutoPredTypeThing:Add("Fake Celex")
 AutoPredTypeThing:Add("Old Azure")
 
@@ -3217,6 +3111,11 @@ AutoPredTypeThing:Add("Old Azure")
 			getgenv().Settings.FearLas.AUTOPRED = bool
 		end)
 		Swiitch:Set(false)
+
+		local pptch = Teb:AddSwitch("pp", function(bool)
+			getgenv().Resolver = bool
+		end)
+		pptch:Set(false)
 
 		local Droopdown = Teb:AddDropdown("Aim Bone", function(object)
 		getgenv().SelectedPart = object
@@ -3394,8 +3293,7 @@ ToggleButton.MouseButton1Click:Connect(onButtonClicked)
 -- Your existing code modified for the GUI
 game:GetService("RunService").Stepped:Connect(function()
     if getgenv().Speed then
-        local lPlr = game:GetService("Players").LocalPlayer
-        lPlr.Character.HumanoidRootPart.CFrame = lPlr.Character.HumanoidRootPart.CFrame + lPlr.Character.Humanoid.MoveDirection * getgenv().SpeedAmount
+        lplr.Character.HumanoidRootPart.CFrame = lplr.Character.HumanoidRootPart.CFrame + lplr.Character.Humanoid.MoveDirection * getgenv().SpeedAmount
     end
 end)
 end)
@@ -3443,12 +3341,13 @@ end
 -- Event connection
 TextButton.MouseButton1Click:Connect(OnButtonClick)
 end)
-ActualMiscs:AddButton("Auto Click (buggy)", function()
-
--- Initial values
 
 getgenv().AutoShoot = false
 getgenv().TimerShoot = 0.00000001
+
+ActualMiscs:AddButton("Auto Click (buggy)", function()
+
+-- Initial values
 
 -- Create a basic GUI
 local ScreeenGui = Instance.new("ScreenGui")
@@ -3465,11 +3364,17 @@ TooggleButton.BackgroundColor3 = Color3.fromRGB(69,0,0)
 TooggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 local UIICorner = Instance.new("UICorner")
 UIICorner.Parent = TooggleButton
+
 local function oonButtonClicked()
     getgenv().AutoShoot = not getgenv().AutoShoot
 end
 TooggleButton.MouseButton1Click:Connect(oonButtonClicked)
 -- Your existing code modified for the GUI
+while getgenv().AutoShoot == true do
+wait(getgenv().TimerShoot)
+mouse1click()
+end
+
 end)
 ActualMiscs:AddTextBox("Click Speed", function(text)
 getgenv().TimerShoot = text
@@ -3477,10 +3382,7 @@ end,
 {
 ["clear"] = false, -- Default: true (options are optional)
 })
-while getgenv().AutoShoot do
-task.wait(getgenv().TimerShoot)
-mouse1click()
-end
+
 if getgenv().NoDelay == true then
 game:GetService("CorePackages").Packages:Destroy()
 end
@@ -3548,10 +3450,7 @@ end)
 end
 --// Config System
 
-local SpeakerTitan = Taab:AddSwitch("Target Stats", function(bool)
-	getgenv().Settings.FearLas.TargetStats = bool
-end)
-SpeakerTitan:Set(false)
+
 
 --// Quick Execute
 	local Console = Tub:AddConsole({
